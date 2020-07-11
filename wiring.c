@@ -12,11 +12,14 @@ void delay(unsigned long ms)
     } while (--ms);
 }
 
+// avr-libc math.h does not declare gcc log2 builtin
+double log2(double);
+
 void init()
 {
     asm("sei");
 
-    // setup ADC with /32 prescaler
-    ADCSRA = (1 << ADPS2) | (1 << ADPS0) | (1 << ADEN);
+    // setup ADC with 250-500kHz clock
+    uint8_t prescaler = log2(F_CPU/500000);
+    ADCSRA = prescaler | (1 << ADEN);
 }
-
