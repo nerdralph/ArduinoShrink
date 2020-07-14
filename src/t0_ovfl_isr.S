@@ -8,9 +8,6 @@
 ;    uint8_t ovfl_pad;
 ;} t0_millis;
 
-; so timer ISR is brought in by linker when needed
-.global t0_ovfl_inc
-
 .global TIMER0_OVF_vect
 TIMER0_OVF_vect:
     push r16
@@ -32,3 +29,13 @@ t0_ovfl_inc:
     pop r16
 reti
 
+; shift left r22-r25 (ulong), arg in r30
+.global lsl4_r22_r30
+lsl4_r22_r30:
+    lsl r22
+    rol r23
+    rol r24
+    rol r25
+    dec r30
+    brne lsl4_r22_r30
+ret

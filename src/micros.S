@@ -10,8 +10,8 @@
 ;    uint8_t ovfl_pad;
 ;} t0_millis;
 
-; ensure timer ISR is brought in by linker
-.global t0_ovfl_inc
+
+;.global lsl4_r22_r30
 
 .global micros
 micros:
@@ -24,5 +24,7 @@ micros:
     ldd r25, Z+2
     in r0, TCNT0
     sub r0, r22                         ; TCNT0 overflow?
-    brne 1b
+    brcs 1b
+    ldi r30, 2                          ; multiply by micros/tick
+    rcall lsl4_r22_r30
 ret
