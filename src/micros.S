@@ -11,10 +11,11 @@
 ;} t0_millis;
 
 
-;.global lsl4_r22_r30
+; to force t0_isr to get linked in
+.global t0_ovfl_isr
 
-.global micros
-micros:
+.global micros_raw
+micros_raw:
     ldi ZL, lo8(t0_millis)
     ldi ZH, hi8(t0_millis)
 1:
@@ -25,6 +26,4 @@ micros:
     in r0, TCNT0
     sub r0, r22                         ; TCNT0 overflow?
     brcs 1b
-    ldi r30, 2                          ; multiply by micros/tick
-    rcall lsl4_r22_r30
 ret

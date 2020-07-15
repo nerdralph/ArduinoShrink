@@ -20,3 +20,4 @@ void init_millis()
     TCCR0B = _BV(CS01) | _BV(CS00);     // div64 prescaler
     TIMSK0 = _BV(TOIE0);                // enable overflow interrupt
 }
+
