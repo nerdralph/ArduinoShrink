@@ -8,6 +8,14 @@ struct {
     uint8_t ovfl_pad;
 } t0_millis;
 
+extern uint32_t micros_raw();
+uint32_t micros()
+{
+    register uint32_t u asm("r22");
+    asm ("%~call %x1" : "=r" (u) : "i"(micros_raw) : "r30", "r31" );
+    return u * 4;
+}
+
 // portability macros for mega8
 #ifndef TCCR0B
 #define TCCR0B TCCR0
