@@ -4,28 +4,19 @@
 #include <Arduino.h>
 #include <util/delay.h>
 
-/*
-__attribute ((noinline))
-void delay(unsigned long ms)
+// lightweight custom function call abi
+extern void delay_impl();
+void delay(uint32_t msec)
 {
-    do {
-        _delay_us(999);                 // leave 1us for loop overhead
-    } while (--ms);
-}
-*/
-
-void delay(unsigned long ms)
-{
-    // lower 16-bits of micros is enough considering wraparound
-    uint16_t start = micros();
-
-    while (ms > 0) {
-        yield();
-        while (ms > 0 && ((uint16_t)micros() - start) >= 1000) {
-            ms --;
-            start += 1000;
-        }
-    }
+    register uint32_t ms asm ("r24") = msec;
+    asm volatile (
+        ".global T0CNT_PER_MS\n"
+        ".equ T0CNT_PER_MS, 250\n"
+        "rcall %x1\n" 
+        : "+r"(ms)
+        : "i"(delay_impl)
+        : "r18", "r19", "r20", "r21"
+    );
 }
 
 // avr-libc math.h does not declare gcc log2 builtin
@@ -39,3 +30,4 @@ void init()
     uint8_t prescaler = log2(F_CPU/500000);
     ADCSRA = prescaler | (1 << ADEN);
 }
+

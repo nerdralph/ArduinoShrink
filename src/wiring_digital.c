@@ -26,6 +26,7 @@ inline ioreg_p pin_to_pinreg(uint8_t pin)
 inline uint8_t pin_to_bit(uint8_t pin)
 {
     return digital_pin_to_bit_mask_PGM[pin];
+    //return ((const __flash uint8_t*) digital_pin_to_bit_mask_PGM)[pin];
 }
 
 void pinMode(uint8_t pin, uint8_t mode)
