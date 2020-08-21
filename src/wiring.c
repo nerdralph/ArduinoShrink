@@ -9,9 +9,11 @@ extern void delay_impl();
 void delay(uint32_t msec)
 {
     register uint32_t ms asm ("r24") = msec;
-    asm volatile (
+    asm ( ".equ T0CNT_PER_MS, %0\n" 
         ".global T0CNT_PER_MS\n"
-        ".equ T0CNT_PER_MS, 250\n"
+        // T0 prescaler is 64
+        :: "i" (F_CPU / 1000 / 64) );
+    asm volatile (
         "rcall %x1\n" 
         : "+r"(ms)
         : "i"(delay_impl)
