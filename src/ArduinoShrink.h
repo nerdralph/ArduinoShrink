@@ -1,25 +1,17 @@
 // (c) Ralph Doncaster 2020
 // ArduinoShrink
 
-#include <util/delay.h>
-
-inline void delayMicroseconds(unsigned int us)
+extern "C" void delay_impl();
+// lightweight custom function call abi
+__attribute((always_inline))
+inline void delay(uint32_t msec)
 {
-    _delay_us(us);
-}
-
-// move millis to millis.c - LTO can inline
-// millis_raw is slow by 2.4% (1000/1024), so multiply by 1.024
-// shift and add instead of multiply: 1 6/256 = 1.0234375
-// ifdef RAW_MILLIS - else precise millis
-extern "C" uint32_t millis_raw();
-inline uint32_t millis()
-{
-    uint32_t m = millis_raw();
-    // return m;
-    // high-precision millis correction =~ 32 extra bytes
-    // 1 + 1573/2^16 = 1.0240
-    // return m + ((m * 1573) >> 16);
-    return m + m>>6 + m>>7;
+    register __uint24 ms asm ("r24") = msec;
+    asm volatile (
+        "rcall %x1\n" 
+        : "+r"(ms)
+        : "i"(delay_impl)
+        : "r19", "r20", "r21"           // clobbers
+    );
 }
 
