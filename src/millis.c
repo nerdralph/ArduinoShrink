@@ -1,12 +1,9 @@
 // (c) Ralph Doncaster 2020
 // ArduinoShrink
 
-#include <Arduino.h>
-
-struct {
-    volatile uint32_t t0_ovfl;
-    uint8_t ovfl_pad;
-} t0_millis;
+//#include <Arduino.h>
+#include <avr/io.h>
+#include "as_common.h"
 
 extern uint32_t micros_raw();
 uint32_t micros()
@@ -23,22 +20,29 @@ uint32_t micros()
     return u;
 }
 
-// avr-libc math.h does not declare gcc log2 builtin
-double log2(double);
+extern uint32_t millis_impl();
+uint32_t millis()
+{
+    return millis_impl();
+}
 
-// portability macros for mega8
-#ifndef TCCR0B
-#define TCCR0B TCCR0
-#define TIMSK0 TIMSK
-#endif
+#define CPU_MHZ (F_CPU / 1000000)
+#define MICROS_PER_T0_OVFL ((T0_PRESCALE * 256) / CPU_MHZ)
+#define MILLIS_INC (MICROS_PER_T0_OVFL / 1000)
+#define FRACT_INC ((MICROS_PER_T0_OVFL % 1000) >> 2)
 
 __attribute(( section(".init8"), used, naked))
 void init_millis()
 {
+    // for millis ISR
+    asm ( ".global MILLIS_INC\n");
+    asm ( ".equ MILLIS_INC, %0\n" :: "M" (MILLIS_INC) );
+    asm ( ".global FRACT_INC\n");
+    asm ( ".equ FRACT_INC, %0\n" :: "M" (FRACT_INC) );
+
     // scaling factor for t0 vs 16Mhz
     uint8_t t0_scale = log2(16000000/F_CPU);
     asm ( ".equ T0_SCALE, %0\n" :: "M" (t0_scale) );
-    TCCR0B = _BV(CS01) | _BV(CS00);     // div64 prescaler
-    TIMSK0 = _BV(TOIE0);                // enable overflow interrupt
+    TIMSK0 = _BV(TOIE0);                // enable T0 overflow interrupt
 }
 
