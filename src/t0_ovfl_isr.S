@@ -35,21 +35,17 @@ GLABEL TIMER0_OVF_vect
     push ZH
     ldi ZH, hi8(t0_fract)
     ld r16, Z
-    //subi r16, lo8(-(FRACT_INC))         ; add millis fraction
-    //cpi r16, FRACT_MAX                  ; C set when fract < FRACT_MAX
     subi r16, lo8(FRACT_INC)            ; subtract millis fraction
     brcc _no_underflow
     subi r16, lo8(-FRACT_MAX)           ; add FRACT_MAX, clears Carry
-    rjmp 2f
+    rjmp 1f
 _no_underflow:
     sec                                 ; invert Carry
-2:
+1:
     st Z+, r16
     ; add one more to millis LSB when fractional counter underflows
     ld r16, Z
     sbci r16, lo8(-(MILLIS_INC + 1))     ; r16 += MILLIS_INC + NOT Carry
-    ;adc r16, r1                         ; r16 += Carry
-    ;sbci r16, lo8(-(MILLIS_INC))        ; r16 += MILLIS_INC
     rjmp _save
 _add1:                                  ; handle most significant bytes
     ld r16, Z
