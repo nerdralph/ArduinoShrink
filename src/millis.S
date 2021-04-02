@@ -10,7 +10,7 @@
 GLABEL millis_impl
     ldi ZL, lo8(t0_millis)
     ldi ZH, hi8(t0_millis)
-_reload:
+  _reload:
     ld r22, Z
     ldd r23, Z+1
     ldd r24, Z+2

@@ -5,28 +5,31 @@
 #include <avr/io.h>
 #include "as_common.h"
 
+#define CPU_MHZ (F_CPU / 1000000)
+
 extern uint32_t micros_raw();
 uint32_t micros()
 {
     register uint32_t u asm("r22");
-    //asm ("%~call %x1" : "=r" (u) : "i"(micros_raw) : "r30", "r31" );
-    //return u * 4;
-    asm (
-        "%~call %x1                 \n"
-        "ldi r30, lo8(T0_SCALE + 2) \n"
-        "rcall lsl4_r22_r30         \n"
-        : "=r" (u) : "i"(micros_raw) : "r30", "r31"
-    );
-    return u;
+    asm ("%~call %x1" : "=r" (u) : "i"(micros_raw) : "r30", "r31" );
+    // split into lower 8 & upper 24-bits
+    uint8_t t0 = u & 0xFF;
+    __uint24 u3 = u >> 8;
+
+    //return (u3 * 1000) + (t0 * (uint8_t)(T0_PRESCALE / CPU_MHZ));
+    // shift + add saves 24B vs * 1000, asm would be a bit smaller
+    return ( ((u3 << 7) - ((u3 << 1) + u3)) << 3 ) + 
+        (t0 * (uint8_t)(T0_PRESCALE / CPU_MHZ));
 }
 
 extern uint32_t millis_impl();
 uint32_t millis()
 {
+    register uint32_t m asm("r22");
+    asm ("%~call %x1" : "=r" (m) : "i"(millis_impl) : "r30", "r31" );
     return millis_impl();
 }
 
-#define CPU_MHZ (F_CPU / 1000000)
 #define MICROS_PER_T0_OVFL ((T0_PRESCALE * 256) / CPU_MHZ)
 #define MILLIS_INC (MICROS_PER_T0_OVFL / 1000)
 #define FRACT_INC ((MICROS_PER_T0_OVFL % 1000) >> 2)
@@ -40,9 +43,6 @@ void init_millis()
     asm ( ".global FRACT_INC\n");
     asm ( ".equ FRACT_INC, %0\n" :: "M" (FRACT_INC) );
 
-    // scaling factor for t0 vs 16Mhz
-    uint8_t t0_scale = log2(16000000/F_CPU);
-    asm ( ".equ T0_SCALE, %0\n" :: "M" (t0_scale) );
     TIMSK0 = _BV(TOIE0);                // enable T0 overflow interrupt
 }
 

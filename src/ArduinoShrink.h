@@ -8,7 +8,7 @@ inline void delay(uint32_t msec)
 {
     register __uint24 ms asm ("r24") = msec;
     asm volatile (
-        "rcall %x1\n" 
+        "%~call %x1\n" 
         : "+r"(ms)
         : "i"(delay_impl)
         : "r19", "r20", "r21"           // clobbers

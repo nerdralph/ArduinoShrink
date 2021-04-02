@@ -5,12 +5,6 @@
 #define __SFR_OFFSET 0
 #include <avr/io.h>
 
-;struct {
-;    uint32_t t0_ovfl;
-;    uint8_t ovfl_pad;
-;} t0_millis;
-
-
 ; to force t0_isr to get linked in
 .global t0_ovfl_isr
 
@@ -18,12 +12,13 @@
 micros_raw:
     ldi ZL, lo8(t0_millis)
     ldi ZH, hi8(t0_millis)
-1:
+  _reload:
     in r22, TCNT0
     ld r23, Z
     ldd r24, Z+1
     ldd r25, Z+2
     in r0, TCNT0
     sub r0, r22                         ; TCNT0 overflow?
-    brcs 1b
+    brcs _reload
 ret
+
