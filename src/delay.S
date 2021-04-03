@@ -9,6 +9,7 @@
 #define start   r0
 #define remain  r20
 #define current r21
+; todo: implement fractional T0CNT_PER_MS for precision with non 2^n F_CPU
 ; delay for r26:r24 (u24) ms
 GLABEL delay_impl
     in  start, TCNT0
@@ -19,6 +20,7 @@ _wait1ms:                                ; check TCNT0 until 1ms has passed
     add start, current                  ; advance start
     sub remain, current
     brcc _wait1ms
+    ; sub remain_fract, T0MS_FRACT
     subi remain, lo8(-(T0CNT_PER_MS))   ; add 1ms
     ; decrement ms argument
     sbiw r24, 1
