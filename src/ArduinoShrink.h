@@ -11,7 +11,7 @@ inline void delay(uint32_t msec)
         "%~call %x1\n" 
         : "+r"(ms)
         : "i"(delay_impl)
-        : "r19", "r20", "r21"           // clobbers
+        : "r20", "r21"           // clobbers
     );
 }
 
