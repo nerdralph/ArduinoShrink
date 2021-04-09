@@ -5,6 +5,20 @@
 #include <util/delay.h>
 #include "as_common.h"
 
+extern void delay_impl();
+
+// lightweight asm function call interface
+void delay(uint32_t msec)
+{
+    register __uint24 ms asm ("r24") = msec;
+    asm volatile (
+        "%~call %x1\n" 
+        : "+r"(ms)
+        : "i"(delay_impl)
+        : "r20", "r21"           // clobbers
+    );
+}
+
 // delays a specified number of microseconds - modified from picoCore
 // works for clock frequencies of 4Mhz and up
 void delayMicroseconds(uint16_t us)
