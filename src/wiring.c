@@ -1,6 +1,7 @@
 // (c) Ralph Doncaster 2020
 // ArduinoShrink
 
+#define ARDUINO_MAIN
 #include <Arduino.h>
 #include <util/delay.h>
 #include "as_common.h"
