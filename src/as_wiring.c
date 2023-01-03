@@ -36,7 +36,7 @@ void delayMicroseconds(uint16_t us)
     delay1us:
         // delay 1us per loop, less 4 cycles for overhead
         _delay_us(1.0 - (4.0 / fMHz));
-        asm volatile ("sbiw %[us], 1" : [us]"+d"(us));
+        asm volatile ("sbiw %[us], 1" : [us]"+w"(us));
     asm goto( "brne %l[delay1us]" :::: delay1us);
 }
 
