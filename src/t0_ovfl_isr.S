@@ -11,6 +11,7 @@
 ;    uint32_t t0_millis;
 ;    uint8_t millis_pad;
 ;} t0_millis;
+.global t0_fract
 .lcomm t0_fract, 1
 .global t0_millis
 .lcomm t0_millis, 5                     ; t0_millis + pad

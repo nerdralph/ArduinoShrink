@@ -7,19 +7,31 @@
 
 #define CPU_MHZ (F_CPU / 1000000)
 
+// micros_raw return data
+typedef union {
+    uint32_t i32;
+    struct {
+        uint8_t t0cnt; uint8_t t0fract; uint16_t t0millis;
+    };
+} micros_raw_data;
+
 extern uint32_t micros_raw();
 uint32_t micros()
 {
-    register uint32_t u asm("r22");
+    // see micros.S for micros_raw implementation
+    register micros_raw_data u asm("r22");
     asm ("%~call %x1" : "=r" (u) : "i"(micros_raw) : "r30", "r31" );
-    // split into lower 8 & upper 24-bits
-    uint8_t t0 = u & 0xFF;
-    __uint24 u3 = u >> 8;
+    uint8_t t0 = u.t0cnt;
+    // millis fraction/250, so mf * 4 = micoseconds
+    uint8_t mf = u.t0fract;
+    uint16_t m16 = u.t0millis;
 
-    //return (u3 * 1000) + (t0 * (uint8_t)(T0_PRESCALE / CPU_MHZ));
-    // shift + add saves 24B vs * 1000, asm would be a bit smaller
-    return ( ((u3 << 7) - ((u3 << 1) + u3)) << 3 ) + 
-        (t0 * (uint8_t)(T0_PRESCALE / CPU_MHZ));
+    //return (m16 * 1000) + (t0 * (uint8_t)(T0_PRESCALE / CPU_MHZ));
+    // shift + add is less code vs * 1000, asm would be a bit smaller
+    // mf << 2 is the same as mf * 4
+    return ( ((m16 << 7) - ((m16 << 1) + m16)) << 3 ) + 
+        (t0 * (uint8_t)(T0_PRESCALE / CPU_MHZ)) +
+        (mf << 2);
 }
 
 extern uint32_t millis_impl();
