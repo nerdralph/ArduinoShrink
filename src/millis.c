@@ -23,7 +23,7 @@ uint32_t micros()
     asm ("%~call %x1" : "=r" (u) : "i"(micros_raw) : "r30", "r31" );
     uint8_t t0 = u.t0cnt;
     // millis fraction/250, so mf * 4 = micoseconds
-    uint8_t mf = u.t0fract;
+    uint8_t mf = 256 - u.t0fract;
     uint16_t m16 = u.t0millis;
 
     //return (m16 * 1000) + (t0 * (uint8_t)(T0_PRESCALE / CPU_MHZ));
